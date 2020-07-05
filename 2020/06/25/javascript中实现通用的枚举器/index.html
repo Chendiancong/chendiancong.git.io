@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>javascript中实现通用的迭代器 | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="枚举器和迭代器对于数据集合，例如Array，List，可以用某种方法，逐个的访问他们之中的元素，并且能够在最后自动结束以防止越界访问，实现这种功能的工具就可以成为枚举器。在javascript里面，数组是可以直接使用在for..of..语句之中的，但是Map就要先获取它的键值的迭代器，然后再枚举键值来访问其元素。那么什么是迭代器呢，迭代器是枚举概念的一个延伸。枚举是作用于数据集合的，就好像上面所说">
+<meta property="og:type" content="article">
+<meta property="og:title" content="javascript中实现通用的迭代器">
+<meta property="og:url" content="http://yoursite.com/2020/06/25/javascript%E4%B8%AD%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8%E7%9A%84%E6%9E%9A%E4%B8%BE%E5%99%A8/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="枚举器和迭代器对于数据集合，例如Array，List，可以用某种方法，逐个的访问他们之中的元素，并且能够在最后自动结束以防止越界访问，实现这种功能的工具就可以成为枚举器。在javascript里面，数组是可以直接使用在for..of..语句之中的，但是Map就要先获取它的键值的迭代器，然后再枚举键值来访问其元素。那么什么是迭代器呢，迭代器是枚举概念的一个延伸。枚举是作用于数据集合的，就好像上面所说">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yoursite.com/2020/06/25/javascript%E4%B8%AD%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8%E7%9A%84%E6%9E%9A%E4%B8%BE%E5%99%A8/1.jpg">
+<meta property="og:image" content="http://yoursite.com/2020/06/25/javascript%E4%B8%AD%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8%E7%9A%84%E6%9E%9A%E4%B8%BE%E5%99%A8/2.jpg">
+<meta property="article:published_time" content="2020-06-25T15:12:24.000Z">
+<meta property="article:modified_time" content="2020-06-27T15:22:28.617Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="杂谈">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/2020/06/25/javascript%E4%B8%AD%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8%E7%9A%84%E6%9E%9A%E4%B8%BE%E5%99%A8/1.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-javascript中实现通用的枚举器" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2020/06/25/javascript%E4%B8%AD%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8%E7%9A%84%E6%9E%9A%E4%B8%BE%E5%99%A8/" class="article-date">
+  <time datetime="2020-06-25T15:12:24.000Z" itemprop="datePublished">2020-06-25</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      javascript中实现通用的迭代器
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="枚举器和迭代器"><a href="#枚举器和迭代器" class="headerlink" title="枚举器和迭代器"></a>枚举器和迭代器</h2><p>对于数据集合，例如Array，List，可以用某种方法，逐个的访问他们之中的元素，并且能够在最后自动结束以防止越界访问，实现这种功能的工具就可以成为枚举器。<br>在javascript里面，数组是可以直接使用在for..of..语句之中的，但是Map就要先获取它的键值的迭代器，然后再枚举键值来访问其元素。<br>那么什么是迭代器呢，迭代器是枚举概念的一个延伸。枚举是作用于数据集合的，就好像上面所说的Array和List，它很大程度上是用于逐个访问元素，迭代器则类似一个状态机，它就像枚举器一样，从一个开始的状态不断步进，直到到达终结状态，表明迭代结束。迭代器在每次步进的时候，都会更新自己的状态，并返回一个结果，结果包含了是否结束的标志和一个当前值。如果关注它返回的值，每次取出来进行访问，其实就好像枚举器一样，相当于逐个访问迭代器的当前值。<br>这两者最大的区别是，枚举器对于用户而言仅仅只是一个工具，一个内置类型的对象；迭代器就像一个自定义类的对象，对用户而言他是透明的，只要实现了特定的接口就可以工作，用户可以自行设计他的特色功能，控制他的迭代流程。<br>其实数组在被枚举的时候，所使用的枚举器的类型也是Iterator，即迭代器，但是在无法对其步进方式进行控制的情况下，在概念上称之为枚举器也没什么问题。</p>
+<h2 id="枚举器和迭代器的使用"><a href="#枚举器和迭代器的使用" class="headerlink" title="枚举器和迭代器的使用"></a>枚举器和迭代器的使用</h2><p>对于可枚举的对象，使用for..of..语句就能很简单的枚举它的每一个元素。其实for..of..语句是获取该对象的迭代器对象，它会调用一个方法，这个方法名为一个Symbol：Symbol.Iterator，这个方法需要返回一个迭代器对象，这个对象会有几个方法：next,throw和return:</p>
+<img src="/2020/06/25/javascript%E4%B8%AD%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8%E7%9A%84%E6%9E%9A%E4%B8%BE%E5%99%A8/1.jpg" class="">
+<img src="/2020/06/25/javascript%E4%B8%AD%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8%E7%9A%84%E6%9E%9A%E4%B8%BE%E5%99%A8/2.jpg" class="">
+<p>其实这个语句的内部仍然会用到next方法来步进，在next返回了done为true的结果后结束。只是我们看不到这个过程而已，实际上抛却了for..of..，直接使用next来迭代也是可以的。<br>也就是说，只要实现了Symbol.Iterator方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var obj &#x3D; &#123;</span><br><span class="line">    [Symbol.Iterator]: function() &#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>就可以直接用for..of..来枚举或者是迭代。</p>
+<h2 id="通用的迭代器"><a href="#通用的迭代器" class="headerlink" title="通用的迭代器"></a>通用的迭代器</h2><p>由于数据结构的不一样，对于不同数据集合的枚举方式就会不一样，上面说到，数组可以直接置于for..of..中，Map则要先获取他的key集合的迭代器，而一般对象就要通过枚举它那些可被枚举的属性来进行迭代。<br>通用迭代器的目的是能够使用完全相同的方法对这些数据结构进行枚举，例如使用for..of..或者对它们所生成的迭代器使用next步进。<br>首先需要对它们进行包装，得到一个新的对象，这个对象实现Symbole.Iterator方法。我们把这些数据集合作为数据源，实际上并不适用它们本身所提供的迭代器，对于不同的集合，编写适配它的迭代器，这样的话，在使用上，我们所看到的使用同样的方法，而实际上，每种数据集合都采用了不同的迭代方式。<br>对于数组，建立一个游标，初始化为-1，每次next的时候递进这个游标，并且取出对应这个游标的索引的值，当这个游标移动超出了索引的最大范围的时候，表示迭代结束。<br>对于Map，首先调用他的keys方法，获取到他的key集合的迭代器，每次next的时候，实际上是对这个迭代器进行一次next操作，取出的值再通过map的get方法取出真正的值，而迭代结束的标记则使用这个迭代器的标志，它和整个map的迭代是等效的。<br>对于一般对象，在es6支持了generator的情况下，可以在生成器方法中直接枚举它的键值，然后yield出来，运行这个方法会得到一个同样行为的迭代器，那么在对这种对象而言，迭代的next就和Map一样，只是迭代器有生成器生成，如果不支持生成器，那可以用Object.keys方法得到它当前的所有键值的数据，此时可以像数组一样，用游标来访问key，再通过key获取value。后一种方法的缺点是不能感知到迭代过程中对象属性的变化了，因为Object.keys是将它当前的key值加到一个数组里面而已。<br>迭代器是懒求值的，只有在迭代开始的时候才会进行求值。其次，如果可以将迭代器进行嵌套的话，就有可能实现C#的LINQ里面类似于select，where那种不产生新的数据集合但能够将源数据的一个结果经过层层筛选或者映射得到一个新的值的操作。在C#里面这是通过实现了IEnumerable的可迭代对象的扩展方法实现的，一般来说就是多次的foreach…yield return …，每次foreach需要取值的时候，都会对调用这个方法的可迭代对象进行迭代，如果这个对象也是扩展方法产生的，那么又会再次在foreach里面对调用方法的对象进行迭代，直到到达最原始的IEnuemrable对象，然后一层一层的返回，这个就是C#的内容了，在这里不做赘述。<br>实际上，用一系列嵌套的迭代器就能够实现这种功能。比如说，我需要枚举集合A的时候，A引用了B所产生的迭代器，此时我们可以在A的迭代器next方法里面，对B迭代器进行求值，也就是调用他的next方法，如果B引用了C产生的迭代器，那在B的next方法里面再调用C迭代器的next方法，最终到没有引用迭代器的顶层对象，求值之后再按照调用栈一层一层的返回，在这之中，同样可以筛选和映射。这样，最终返回的值，是没有中间的空间消耗的，他就是有数据源产生并变化得到的。</p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p><a href="https://github.com/Chendiancong/Common-enumerator-of-typescript.git" target="_blank" rel="noopener">https://github.com/Chendiancong/Common-enumerator-of-typescript.git</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2020/06/25/javascript%E4%B8%AD%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8%E7%9A%84%E6%9E%9A%E4%B8%BE%E5%99%A8/" data-id="ckbxsnv000000ioqq5ef8gsfu" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9D%82%E8%B0%88/" rel="tag">杂谈</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2020/06/25/hello-world/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Hello World</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9D%82%E8%B0%88/" rel="tag">杂谈</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/%E6%9D%82%E8%B0%88/" style="font-size: 10px;">杂谈</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">June 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/06/25/javascript%E4%B8%AD%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8%E7%9A%84%E6%9E%9A%E4%B8%BE%E5%99%A8/">javascript中实现通用的迭代器</a>
+          </li>
+        
+          <li>
+            <a href="/2020/06/25/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 John Doe<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>
